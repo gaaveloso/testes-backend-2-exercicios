@@ -1,12 +1,12 @@
 import { UserDatabase } from "../database/UserDatabase"
-import { GetAllOutputDTO, LoginInputDTO, LoginOutputDTO, SignupInputDTO, SignupOutputDTO } from "../dtos/userDTO";
+import { DeleteUserInput, DeleteUserOutput, GetAllOutputDTO, GetUserById, LoginInputDTO, LoginOutputDTO, SignupInputDTO, SignupOutputDTO } from "../dtos/userDTO";
 import { BadRequestError } from "../errors/BadRequestError";
 import { NotFoundError } from "../errors/NotFoundError";
 import { User } from "../models/User";
 import { HashManager } from "../services/HashManager";
 import { IdGenerator } from "../services/IdGenerator";
 import { TokenManager } from "../services/TokenManager";
-import { TokenPayload, UserDB, USER_ROLES } from "../types";
+import { TokenPayload, UserDB, UserModel, USER_ROLES } from "../types";
 
 export class UserBusiness {
     constructor(
@@ -137,5 +137,63 @@ export class UserBusiness {
         })
 
         return output
+    }
+
+    public deleteUser = async (input: DeleteUserInput): Promise<DeleteUserOutput> => {
+        const { token, idToDelete } = input;
+    
+        if (!token) {
+          throw new BadRequestError("'token' ausente");
+        }
+    
+        const payload = this.tokenManager.getPayload(token);
+    
+        if (!payload) {
+          throw new BadRequestError("'token' invalido");
+        }
+    
+        const userDB = await this.userDatabase.findById(idToDelete);
+    
+        if (!userDB) {
+          throw new NotFoundError("'id' não encontrado");
+        }
+
+        await this.userDatabase.delete(idToDelete);
+
+        const output = {message: "Usuario deletado com sucesso"}
+
+        return output
+      };
+
+    public getUserById = async (input: GetUserById): Promise<UserModel> => {
+        const {id, token} = input
+
+        if (!token) {
+            throw new BadRequestError("'token' ausente");
+          }
+      
+          const payload = this.tokenManager.getPayload(token);
+      
+          if (!payload) {
+            throw new BadRequestError("'token' invalido");
+          }
+
+        const userDB = await this.userDatabase.findById(id)
+
+        if(!userDB) {
+            throw new NotFoundError("Usuario não encontrado")
+        }
+
+
+            const user = new User(
+                userDB.id,
+                userDB.name,
+                userDB.email,
+                userDB.password,
+                userDB.role,
+                userDB.created_at
+            )
+
+        return user.toBusinessModel()
     }
 }

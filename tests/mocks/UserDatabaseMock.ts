@@ -53,4 +53,21 @@ export class UserDatabaseMock extends BaseDatabase {
             }
         ]
     }
+
+    public delete = async (): Promise<void> => {
+
+    }
+
+    public findById = async (id: string): Promise<UserDB | undefined> => {
+        if(id === "id-mock") {
+            return {
+                id: "id-mock",
+                name: "Normal Mock",
+                email: "normal@email.com",
+                password: "hash-bananinha",
+                created_at: new Date().toISOString(),
+                role: USER_ROLES.NORMAL
+            }
+        }
+    }
 }
